@@ -1,37 +1,40 @@
 const fs = require('fs');
 const path  = require('path');
 
-const { mkdir, copyFile, readdir, unlink } = require ('node:fs/promises');
+const { mkdir, copyFile, readdir, unlink, rm } = require ('node:fs/promises');
 
 async function copyDir () {
+  const sourseDir = path.join(__dirname, 'files');
+  const destDir = path.join(__dirname, 'files-copy');
+
+  async function createDir(newFolder) {
     try {
-      const newFolder = path.join(path.dirname(__filename), 'files-copy');
       await mkdir(newFolder);
     } catch (err) {
-      // console.error(err.message);
-      const files = await readdir(
-        path.join(path.dirname(__filename), 'files-copy'),
-        { withFileTypes: true });
-      for (const file of files) {
-        const filePath = path.join(path.dirname(__filename), 'files-copy', file.name);
-        await unlink(filePath, { recursive: true, force: true });
-      }
+      await rm(newFolder, { recursive: true, force: true });
+      await createDir(newFolder)
     }
+  }
+  await createDir(destDir)
   
- try {
-    const files = await readdir(
-      path.join(path.dirname(__filename), 'files'),
-      { withFileTypes: true });
-    for (const file of files)
+  copyFolder(sourseDir, destDir)
+  
+  async function copyFolder(orig, res) {
     try {
-      const sourseFile = path.join(path.dirname(__filename), 'files', file.name);
-      const destFile = path.join(path.dirname(__filename), 'files-copy', file.name);
-      await copyFile(sourseFile, destFile);
-    } catch {
-      console.log('The file could not be copied');
+      const files = await readdir(orig, { withFileTypes: true });
+      for (const file of files) {
+        const sourseFile = path.join(orig, file.name);
+        const destFile = path.join(res, file.name);
+        if (file.isFile()) {
+          await copyFile(sourseFile, destFile);
+        } else {
+          createDir(path.join(res, file.name));
+          copyFolder(path.join(orig, file.name), path.join(res, file.name))
+        }
+      }
+    } catch (err) {
+      console.error('error on reading folder');
     }
-  } catch (err) {
-    console.error(err);
   } 
 }
 
