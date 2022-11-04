@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path  = require('path');
 
-const { mkdir, copyFile, readdir, unlink, rm } = require ('node:fs/promises');
+const { mkdir, copyFile, readdir, rm } = require ('node:fs/promises');
 
 async function copyDir () {
   const sourseDir = path.join(__dirname, 'files');
